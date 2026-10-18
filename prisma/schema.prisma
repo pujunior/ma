@@ -1,0 +1,714 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  TOURIST
+  GUIDE
+  ATTRACTION
+  HOTEL
+  RESTAURANT
+  AGENCY
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum EntityStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AERIAL
+  REEL
+}
+
+enum MediaEntityType {
+  ATTRACTION
+  GUIDE
+  HOTEL
+  RESTAURANT
+  AGENCY
+  TOUR
+  REVIEW
+}
+
+enum Difficulty {
+  EASY
+  MODERATE
+  HARD
+  EXTREME
+}
+
+enum BookingItemType {
+  ATTRACTION
+  GUIDE
+  TOUR
+  HOTEL_ROOM
+  RESTAURANT
+}
+
+enum PartnerType {
+  GUIDE
+  ATTRACTION
+  HOTEL
+  RESTAURANT
+  AGENCY
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  REVIEW_REQUEST
+  SYSTEM
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+// ─── Core ────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String?
+  role         UserRole   @default(TOURIST)
+  status       UserStatus @default(PENDING_VERIFICATION)
+  emailVerified DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  touristProfile TouristProfile?
+  guide          Guide?
+  partner        Partner?
+  bookings       Booking[]
+  reviews        Review[]
+  favorites      Favorite[]
+  notifications  Notification[]
+  messagesSent   Message[]       @relation("MessagesSent")
+  messagesReceived Message[]     @relation("MessagesReceived")
+  accounts       Account[]
+  sessions       Session[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model TouristProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  name      String
+  phone     String?
+  avatarUrl String?
+  bio       String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tourist_profiles")
+}
+
+// ─── Geography ───────────────────────────────────────────────────────────────
+
+model Destination {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  state       String
+  country     String   @default("Brasil")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attractions Attraction[]
+  guides      Guide[]
+
+  @@map("destinations")
+}
+
+model Location {
+  id           String   @id @default(cuid())
+  address      String?
+  city         String
+  state        String
+  country      String   @default("Brasil")
+  postalCode   String?
+  latitude     Decimal  @db.Decimal(10, 8)
+  longitude    Decimal  @db.Decimal(11, 8)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attractions Attraction[]
+  guides      Guide[]
+  hotels      Hotel[]
+  restaurants Restaurant[]
+
+  @@index([latitude, longitude])
+  @@map("locations")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attractions Attraction[]
+
+  @@map("categories")
+}
+
+// ─── Partners ────────────────────────────────────────────────────────────────
+
+model Partner {
+  id           String      @id @default(cuid())
+  userId       String      @unique
+  type         PartnerType
+  businessName String
+  document     String?
+  phone        String?
+  status       EntityStatus @default(PENDING_REVIEW)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commissions Commission[]
+  agency      Agency?
+
+  @@index([type, status])
+  @@map("partners")
+}
+
+model Guide {
+  id             String       @id @default(cuid())
+  userId         String       @unique
+  destinationId  String
+  locationId     String?
+  slug           String       @unique
+  name           String
+  bio            String       @db.Text
+  avatarUrl      String?
+  experienceYears Int         @default(0)
+  languages      String[]
+  specialties    String[]
+  certifications String[]
+  priceFrom      Decimal      @db.Decimal(10, 2)
+  rating         Decimal      @default(0) @db.Decimal(3, 2)
+  reviewCount    Int          @default(0)
+  tourCount      Int          @default(0)
+  status         EntityStatus @default(DRAFT)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination  Destination          @relation(fields: [destinationId], references: [id])
+  location     Location?            @relation(fields: [locationId], references: [id])
+  availability GuideAvailability[]
+  tours        Tour[]
+  media        Media[]
+
+  @@index([destinationId, status])
+  @@index([rating])
+  @@map("guides")
+}
+
+model GuideAvailability {
+  id        String   @id @default(cuid())
+  guideId   String
+  date      DateTime @db.Date
+  startTime String
+  endTime   String
+  capacity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
+  isBlocked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guide Guide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+
+  @@unique([guideId, date, startTime])
+  @@index([guideId, date])
+  @@map("guide_availability")
+}
+
+// ─── Attractions ─────────────────────────────────────────────────────────────
+
+model Attraction {
+  id               String       @id @default(cuid())
+  destinationId    String
+  categoryId       String?
+  locationId       String
+  slug             String       @unique
+  name             String
+  description      String       @db.Text
+  shortDescription String?
+  difficulty       Difficulty   @default(EASY)
+  avgVisitMinutes  Int?
+  capacity         Int?
+  rules            String?      @db.Text
+  structure        String?      @db.Text
+  priceFrom        Decimal      @db.Decimal(10, 2)
+  rating           Decimal      @default(0) @db.Decimal(3, 2)
+  reviewCount      Int          @default(0)
+  status           EntityStatus @default(DRAFT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+
+  destination Destination          @relation(fields: [destinationId], references: [id])
+  category    Category?            @relation(fields: [categoryId], references: [id])
+  location    Location             @relation(fields: [locationId], references: [id])
+  schedules   AttractionSchedule[]
+  media       Media[]
+
+  @@index([destinationId, status])
+  @@index([rating])
+  @@map("attractions")
+}
+
+model AttractionSchedule {
+  id           String   @id @default(cuid())
+  attractionId String
+  dayOfWeek    Int
+  openTime     String
+  closeTime    String
+  price        Decimal  @db.Decimal(10, 2)
+  capacity     Int      @default(50)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attraction Attraction @relation(fields: [attractionId], references: [id], onDelete: Cascade)
+
+  @@unique([attractionId, dayOfWeek, openTime])
+  @@map("attraction_schedules")
+}
+
+// ─── Hotels & Restaurants (prepared, MVP inactive) ───────────────────────────
+
+model Hotel {
+  id          String       @id @default(cuid())
+  locationId  String
+  slug        String       @unique
+  name        String
+  description String       @db.Text
+  type        String       @default("hotel")
+  priceFrom   Decimal      @db.Decimal(10, 2)
+  rating      Decimal      @default(0) @db.Decimal(3, 2)
+  reviewCount Int          @default(0)
+  services    String[]
+  status      EntityStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  location Location @relation(fields: [locationId], references: [id])
+  rooms    Room[]
+  media    Media[]
+
+  @@map("hotels")
+}
+
+model Room {
+  id          String       @id @default(cuid())
+  hotelId     String
+  name        String
+  description String?      @db.Text
+  capacity    Int
+  price       Decimal      @db.Decimal(10, 2)
+  amenities   String[]
+  status      EntityStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@map("rooms")
+}
+
+model Restaurant {
+  id          String       @id @default(cuid())
+  locationId  String
+  slug        String       @unique
+  name        String
+  description String       @db.Text
+  cuisine     String[]
+  priceFrom   Decimal      @db.Decimal(10, 2)
+  rating      Decimal      @default(0) @db.Decimal(3, 2)
+  reviewCount Int          @default(0)
+  status      EntityStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  location Location @relation(fields: [locationId], references: [id])
+  media    Media[]
+
+  @@map("restaurants")
+}
+
+// ─── Agency & Tours ──────────────────────────────────────────────────────────
+
+model Agency {
+  id          String       @id @default(cuid())
+  partnerId   String       @unique
+  slug        String       @unique
+  name        String
+  description String       @db.Text
+  rating      Decimal      @default(0) @db.Decimal(3, 2)
+  reviewCount Int          @default(0)
+  status      EntityStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  partner  Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  tours    Tour[]
+  packages Package[]
+  media    Media[]
+
+  @@map("agencies")
+}
+
+model Tour {
+  id          String       @id @default(cuid())
+  agencyId    String?
+  guideId     String?
+  slug        String       @unique
+  name        String
+  description String       @db.Text
+  duration    Int
+  priceFrom   Decimal      @db.Decimal(10, 2)
+  capacity    Int          @default(20)
+  status      EntityStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  agency Agency? @relation(fields: [agencyId], references: [id])
+  guide  Guide?  @relation(fields: [guideId], references: [id])
+  media  Media[]
+
+  @@map("tours")
+}
+
+model Package {
+  id          String       @id @default(cuid())
+  agencyId    String
+  slug        String       @unique
+  name        String
+  description String       @db.Text
+  duration    Int
+  priceFrom   Decimal      @db.Decimal(10, 2)
+  status      EntityStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@map("packages")
+}
+
+// ─── Bookings & Payments ─────────────────────────────────────────────────────
+
+model Booking {
+  id          String        @id @default(cuid())
+  bookingCode String        @unique
+  userId      String
+  status      BookingStatus @default(PENDING)
+  visitDate   DateTime      @db.Date
+  visitTime   String?
+  guestCount  Int           @default(1)
+  totalAmount Decimal       @db.Decimal(10, 2)
+  notes       String?       @db.Text
+  qrCodeData  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  user        User         @relation(fields: [userId], references: [id])
+  items       BookingItem[]
+  payment     Payment?
+  review      Review?
+  commission  Commission?
+
+  @@index([userId, status])
+  @@index([visitDate])
+  @@map("bookings")
+}
+
+model BookingItem {
+  id        String          @id @default(cuid())
+  bookingId String
+  itemType  BookingItemType
+  itemId    String
+  title     String
+  quantity  Int             @default(1)
+  unitPrice Decimal         @db.Decimal(10, 2)
+  subtotal  Decimal         @db.Decimal(10, 2)
+  createdAt DateTime        @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([itemType, itemId])
+  @@map("booking_items")
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  bookingId   String        @unique
+  provider    String        @default("mock")
+  externalId  String?
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("BRL")
+  metadata    Json?
+  paidAt      DateTime?
+  refundedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([externalId])
+  @@map("payments")
+}
+
+model Commission {
+  id         String           @id @default(cuid())
+  bookingId  String           @unique
+  partnerId  String
+  amount     Decimal          @db.Decimal(10, 2)
+  rate       Decimal          @db.Decimal(5, 4)
+  status     CommissionStatus @default(PENDING)
+  paidAt     DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@map("commissions")
+}
+
+// ─── Reviews & Favorites ─────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  userId    String
+  itemType  BookingItemType
+  itemId    String
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media   Media[]
+
+  @@index([itemType, itemId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model Favorite {
+  id         String          @id @default(cuid())
+  userId     String
+  entityType BookingItemType
+  entityId   String
+  createdAt  DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@map("favorites")
+}
+
+// ─── Marketing ─────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id            String     @id @default(cuid())
+  code          String     @unique
+  type          CouponType
+  value         Decimal    @db.Decimal(10, 2)
+  minAmount     Decimal?   @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int        @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("coupons")
+}
+
+// ─── Comms ───────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  subject    String?
+  body       String   @db.Text
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MessagesReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId, readAt])
+  @@map("messages")
+}
+
+// ─── Media ───────────────────────────────────────────────────────────────────
+
+model Media {
+  id         String          @id @default(cuid())
+  url        String
+  publicId   String?
+  type       MediaType       @default(IMAGE)
+  entityType MediaEntityType
+  entityId   String
+  alt        String?
+  sortOrder  Int             @default(0)
+  createdAt  DateTime        @default(now())
+
+  attractionId String?
+  guideId      String?
+  hotelId      String?
+  restaurantId String?
+  agencyId     String?
+  tourId       String?
+  reviewId     String?
+
+  attraction Attraction? @relation(fields: [attractionId], references: [id], onDelete: Cascade)
+  guide      Guide?      @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  hotel      Hotel?      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  agency     Agency?     @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tour       Tour?       @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  review     Review?     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@map("media")
+}

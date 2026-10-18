@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Uma surpresa romântica — nossa história, momentos especiais e uma carta do coração."
+    />
+    <meta name="theme-color" content="#1a0e12" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Para o amor da minha vida</title>
+    <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo-principal">Ir para o conteúdo</a>
+
+    <!-- Partículas globais (discretas) -->
+    <canvas id="particles-canvas" class="particles-canvas" aria-hidden="true"></canvas>
+
+    <!-- Tela inicial -->
+    <section id="intro" class="intro" aria-label="Boas-vindas">
+      <div class="intro__inner">
+        <p class="intro__eyebrow">Com todo o meu carinho</p>
+        <h1 class="intro__title">Para o amor da minha vida ❤️</h1>
+        <p class="intro__subtitle">
+          Cada momento ao seu lado se tornou uma das partes mais bonitas da minha história.
+        </p>
+        <button type="button" id="btn-entrar" class="btn btn--primary intro__btn">
+          Entrar na nossa história ❤️
+        </button>
+      </div>
+      <div class="intro__glow" aria-hidden="true"></div>
+    </section>
+
+    <!-- Conteúdo principal (visível após entrar) -->
+    <div id="app-shell" class="app-shell app-shell--hidden" hidden>
+      <header class="site-header" role="banner">
+        <nav class="site-nav" aria-label="Seções do site">
+          <a href="#historia" class="site-nav__link">História</a>
+          <a href="#galeria" class="site-nav__link">Galeria</a>
+          <a href="#especial" class="site-nav__link">Especial</a>
+          <a href="#tempo-juntos" class="site-nav__link">Tempo juntos</a>
+          <a href="#carta" class="site-nav__link">Carta</a>
+          <a href="#final" class="site-nav__link">Final</a>
+        </nav>
+      </header>
+
+      <main id="conteudo-principal">
+        <!-- Nossa história -->
+        <section id="historia" class="section section--history" aria-labelledby="titulo-historia">
+          <div class="container">
+            <h2 id="titulo-historia" class="section__title reveal">Um pouco da nossa história ❤️</h2>
+            <p class="section__lead reveal">
+              Cada capítulo foi escrito com carinho — momentos que marcaram nosso caminho.
+            </p>
+            <ol class="timeline" id="timeline" aria-label="Linha do tempo"></ol>
+          </div>
+        </section>
+
+        <!-- Galeria -->
+        <section id="galeria" class="section section--gallery" aria-labelledby="titulo-galeria">
+          <div class="container">
+            <h2 id="titulo-galeria" class="section__title reveal">Nossos momentos 📷</h2>
+            <p class="section__lead reveal">
+              Alguns instantes que guardo no coração — clique para ampliar.
+            </p>
+            <div id="galeria-grid" class="gallery-grid" role="list"></div>
+            <p id="galeria-vazia" class="gallery-empty" hidden>
+              Em breve, mais momentos nossos por aqui.
+            </p>
+          </div>
+        </section>
+
+        <!-- Seção especial -->
+        <section id="especial" class="section section--quote" aria-labelledby="titulo-especial">
+          <div class="container">
+            <div class="quote-card reveal">
+              <p id="titulo-especial" class="quote-card__before">Se eu pudesse escolher novamente...</p>
+              <p class="quote-card__main">
+                Eu escolheria você. Em todas as versões da minha vida.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contador -->
+        <section id="tempo-juntos" class="section section--counter" aria-labelledby="titulo-contador">
+          <div class="container">
+            <h2 id="titulo-contador" class="section__title reveal">Nosso tempo juntos ❤️</h2>
+            <div class="counter-grid reveal" id="contador" role="group" aria-live="polite">
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-anos">0</span>
+                <span class="counter-item__label">Anos</span>
+              </div>
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-meses">0</span>
+                <span class="counter-item__label">Meses</span>
+              </div>
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-dias">0</span>
+                <span class="counter-item__label">Dias</span>
+              </div>
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-horas">0</span>
+                <span class="counter-item__label">Horas</span>
+              </div>
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-minutos">0</span>
+                <span class="counter-item__label">Minutos</span>
+              </div>
+              <div class="counter-item">
+                <span class="counter-item__value" id="cnt-segundos">0</span>
+                <span class="counter-item__label">Segundos</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Carta -->
+        <section id="carta" class="section section--letter" aria-labelledby="titulo-carta">
+          <div class="container">
+            <h2 id="titulo-carta" class="section__title reveal">Uma carta para você ❤️</h2>
+            <!-- ========== EDITE A CARTA: altere os parágrafos dentro de #carta-conteudo ========== -->
+            <article class="letter reveal" id="carta-conteudo" aria-label="Carta romântica">
+              <p class="letter__salutation">Minha querida,</p>
+              <p>
+                Escrevo estas linhas com a mesma emoção de quem guarda um tesouro: você é a pessoa que
+                transforma dias comuns em memórias que quero repetir para sempre.
+              </p>
+              <p>
+                Obrigado por rir comigo, por me acolher nos dias difíceis e por caminhar ao meu lado com
+                tanta luz. Cada gesto seu me lembra o quanto sou sortudo por ter você na minha vida.
+              </p>
+              <p>
+                Este pequeno site é só um reflexo do que sinto — e ainda assim, palavras nunca serão
+                suficientes para dizer tudo. Saiba que, hoje e sempre, meu coração escolhe você.
+              </p>
+              <p class="letter__signature">Com amor,<br />Seu nome aqui</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- Final -->
+        <section id="final" class="section section--finale" aria-labelledby="titulo-final">
+          <div class="container container--narrow">
+            <h2 id="titulo-final" class="finale__title reveal">Obrigado por fazer parte da minha vida.</h2>
+            <p class="finale__love reveal">Eu te amo. ❤️</p>
+            <figure class="finale-photo reveal">
+              <img
+                id="foto-casal-final"
+                src="assets/images/placeholder-casal.svg"
+                alt="Foto do casal — substitua por sua foto favorita"
+                width="1200"
+                height="700"
+                loading="lazy"
+              />
+            </figure>
+          </div>
+          <canvas id="finale-particles" class="finale-particles" aria-hidden="true"></canvas>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Feito com amor — só para você.</p>
+      </footer>
+    </div>
+
+    <!-- Player de música -->
+    <aside class="music-player" id="music-player" aria-label="Controles de música" hidden>
+      <audio id="audio-musica" preload="metadata">
+        <source src="assets/music/nossa-musica.mp3" type="audio/mpeg" />
+      </audio>
+      <div class="music-player__inner glass">
+        <span class="music-player__status" id="music-status" aria-live="polite">
+          <span class="music-player__dot" id="music-dot" aria-hidden="true"></span>
+          <span id="music-label">Pausado</span>
+        </span>
+        <button type="button" class="music-player__btn" id="btn-music-toggle" aria-label="Play ou pausar música">
+          <span id="icon-play" aria-hidden="true">▶</span>
+          <span id="icon-pause" class="hidden" aria-hidden="true">❚❚</span>
+        </button>
+        <label class="music-player__volume">
+          <span class="visually-hidden">Volume</span>
+          <input
+            type="range"
+            id="volume-control"
+            min="0"
+            max="100"
+            value="70"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="70"
+          />
+        </label>
+      </div>
+    </aside>
+
+    <!-- Lightbox -->
+    <div
+      id="lightbox"
+      class="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Visualização da foto"
+      hidden
+    >
+      <button type="button" class="lightbox__close" id="lightbox-close" aria-label="Fechar">×</button>
+      <button type="button" class="lightbox__nav lightbox__nav--prev" id="lightbox-prev" aria-label="Foto anterior">
+        ‹
+      </button>
+      <figure class="lightbox__figure">
+        <img id="lightbox-img" src="" alt="" />
+        <figcaption id="lightbox-caption" class="visually-hidden"></figcaption>
+      </figure>
+      <button type="button" class="lightbox__nav lightbox__nav--next" id="lightbox-next" aria-label="Próxima foto">
+        ›
+      </button>
+    </div>
+
+    <button type="button" id="btn-topo" class="btn-topo" aria-label="Voltar ao topo" hidden>↑</button>
+
+    <script src="js/script.js" defer></script>
+  </body>
+</html>
